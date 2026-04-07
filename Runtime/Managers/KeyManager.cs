@@ -22,6 +22,12 @@ public class KeyManager : MonoBehaviour
 
     void Awake()
     {
+        if (instance != null && instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         instance = this;
         LoadKeys();
     }
@@ -36,46 +42,42 @@ public class KeyManager : MonoBehaviour
                     binding.targetButton.onClick.Invoke();
             }
         }
-        if (Input.GetKeyDown(KeyCode.P))
+
+        if (Input.GetKeyDown(KeyCode.P) && debugPanel != null)
         {
             debugPanel.SetActive(!debugPanel.activeInHierarchy);
             Cursor.visible = !Cursor.visible;
         }
     }
+
     public string GetActionDown()
     {
         foreach (var binding in bindings)
         {
             if (Input.GetKeyDown(binding.currentKey))
-            {
                 return binding.actionName;
-            }
         }
 
         return null;
     }
 
-    // ================= LOAD =================
+    public static string GetBindingPrefKey(string actionName)
+    {
+        return CorePrefsKeys.BindingKey(actionName);
+    }
 
     void LoadKeys()
     {
         foreach (var binding in bindings)
         {
-            string pref = "KEY_" + binding.actionName;
+            string pref = GetBindingPrefKey(binding.actionName);
 
             if (PlayerPrefs.HasKey(pref))
-            {
-                binding.currentKey =
-                    (KeyCode)Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString(pref));
-            }
+                binding.currentKey = (KeyCode)Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString(pref));
             else
-            {
                 binding.currentKey = binding.defaultKey;
-            }
         }
     }
-
-    // ================= SAVE =================
 
     public void SetKey(string actionName, KeyCode newKey)
     {
@@ -90,7 +92,6 @@ public class KeyManager : MonoBehaviour
         if (target == null)
             return;
 
-        // Duplicate prevention (swap keys)
         foreach (var b in bindings)
         {
             if (b != target && b.currentKey == newKey)
@@ -106,11 +107,9 @@ public class KeyManager : MonoBehaviour
 
     void SaveKey(KeyBinding binding)
     {
-        PlayerPrefs.SetString("KEY_" + binding.actionName, binding.currentKey.ToString());
+        PlayerPrefs.SetString(GetBindingPrefKey(binding.actionName), binding.currentKey.ToString());
         PlayerPrefs.Save();
     }
-
-    // ================= GET =================
 
     public KeyCode GetKey(string actionName)
     {
@@ -122,8 +121,6 @@ public class KeyManager : MonoBehaviour
 
         return KeyCode.None;
     }
-
-    // ================= FRIENDLY DISPLAY =================
 
     public string GetKeyDisplay(KeyCode key)
     {

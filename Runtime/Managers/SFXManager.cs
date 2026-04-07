@@ -36,37 +36,35 @@ public class SFXManager : MonoBehaviour
 
         foreach (Sound s in sounds)
         {
-            if (!soundDictionary.ContainsKey(s.id) && s.clip != null)
+            if (!string.IsNullOrEmpty(s.id) && !soundDictionary.ContainsKey(s.id) && s.clip != null)
                 soundDictionary.Add(s.id, s.clip);
         }
     }
 
-    // ================= BASIC PLAY =================
-
     public void Play(string id)
     {
-        if (!soundDictionary.ContainsKey(id)) return;
+        if (!soundDictionary.ContainsKey(id) || sfxSource == null) return;
 
-        sfxSource.clip= soundDictionary[id];
+        sfxSource.clip = soundDictionary[id];
         sfxSource.Play();
     }
+
     public void Stop()
     {
+        if (sfxSource == null) return;
         sfxSource.Stop();
     }
 
     public void PlayUI(string id)
     {
-        if (!soundDictionary.ContainsKey(id)) return;
+        if (!soundDictionary.ContainsKey(id) || uiSource == null) return;
 
         uiSource.PlayOneShot(soundDictionary[id]);
     }
 
-    // ================= ADVANCED =================
-
     public void PlayPitch(string id, float minPitch, float maxPitch)
     {
-        if (!soundDictionary.ContainsKey(id)) return;
+        if (!soundDictionary.ContainsKey(id) || sfxSource == null) return;
 
         sfxSource.pitch = Random.Range(minPitch, maxPitch);
         sfxSource.PlayOneShot(soundDictionary[id]);
@@ -75,11 +73,13 @@ public class SFXManager : MonoBehaviour
 
     public void SetSFXVolume(float v)
     {
+        if (sfxSource == null) return;
         sfxSource.volume = v;
     }
 
     public void SetUIVolume(float v)
     {
+        if (uiSource == null) return;
         uiSource.volume = v;
     }
 }
