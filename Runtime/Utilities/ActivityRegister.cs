@@ -1,6 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections.Generic;
 using System.IO;
 
 public class ActivityRegister : MonoBehaviour
@@ -11,110 +10,114 @@ public class ActivityRegister : MonoBehaviour
 
     [Header("File Settings")]
     public static string dataFolderName = "Dados";
-    public static string dataSubfolderName = ""; //INSERT COMPANY NAME HERE!
-    public static bool registerHours = false; //If set to true, will register each hour the register process was called.
-
+    public static string dataSubfolderName = "";
+    public static bool registerHours = false;
 
     public void Awake()
     {
         dataSubfolderName = Application.productName;
     }
+
     private static string GetCurrentDate()
     {
-        var _date = System.DateTime.Now;
-        return _date.Day.ToString() + "_" + _date.Month.ToString() + "_" + _date.Year.ToString();
+        var date = System.DateTime.Now;
+        return date.Day + "_" + date.Month + "_" + date.Year;
     }
+
     private static string GetCurrentTime()
     {
-        var _data = System.DateTime.Now;
-        return _data.Hour.ToString() + ":" + _data.Minute.ToString() + ":" + _data.Second.ToString();
+        var data = System.DateTime.Now;
+        return data.Hour + ":" + data.Minute + ":" + data.Second;
     }
+
     private static int GetTotalActivities()
     {
-        return PlayerPrefs.GetInt("activities_" + GetCurrentDate(), 0);
+        return PlayerPrefs.GetInt(CorePrefsKeys.ActivityCountKey(GetCurrentDate()), 0);
     }
+
     private static void SetTotalActivities(int val)
     {
-        PlayerPrefs.SetInt("activities_" + GetCurrentDate(), val);
+        PlayerPrefs.SetInt(CorePrefsKeys.ActivityCountKey(GetCurrentDate()), val);
     }
-    //Call this whenever we want to register a finished activity.
+
     public static void RegisterActivity()
     {
         ReadActivityFile();
 
-        var _time = GetCurrentTime();
         totalActivities = GetTotalActivities();
         SetTotalActivities(totalActivities + 1);
 
         WriteActivityFile();
     }
+
     private static void ReadActivityFile()
     {
-        string _path = GetDesktopDir() + GetActivityFolderDir() + GetActivityFileName();
-        Debug.Log("[ActivityRegister - Read] Reading from: " + _path);
+        string path = GetActivityFilePath();
+        Debug.Log("[ActivityRegister - Read] Reading from: " + path);
 
-        if (File.Exists(_path))
+        knownTimes.Clear();
+
+        if (!File.Exists(path))
         {
-            var lines = File.ReadAllLines(_path);
-
-            for (int i = 0; i < lines.Length; i++)
-            {
-                if (!lines[i].Contains("//") && !lines[i].Contains("Total de jogadas:"))
-                {
-                    knownTimes.Add(lines[i]);
-                }
-            }
+            Debug.LogWarning("[ActivityRegister] " + path + " does not exist!");
+            return;
         }
-        else
+
+        var lines = File.ReadAllLines(path);
+
+        for (int i = 0; i < lines.Length; i++)
         {
-            Debug.LogWarning("[ActivityRegister]" + _path + " does not exist!");
+            if (!lines[i].Contains("//") && !lines[i].Contains("Total de jogadas:"))
+                knownTimes.Add(lines[i]);
         }
     }
+
     private static void WriteActivityFile()
     {
-        string _path = GetDesktopDir() + GetActivityFolderDir() + GetActivityFileName();
-        Debug.Log("[ActivityRegister - Write] Writing at: " + _path);
+        string desktop = GetDesktopDir();
+        string folderPath = GetActivityFolderPath();
+        string path = GetActivityFilePath();
 
-        if (File.Exists(_path))
-        {
-            File.Delete(_path);
-        }
-        if (!Directory.Exists(GetDesktopDir() + @"\" + dataFolderName))
-        {
-            Directory.CreateDirectory(GetDesktopDir() + @"\" + dataFolderName);
-        }
-        if (!Directory.Exists(GetDesktopDir() + GetActivityFolderDir()))
-        {
-            Directory.CreateDirectory(GetDesktopDir() + GetActivityFolderDir());
-        }
+        Debug.Log("[ActivityRegister - Write] Writing at: " + path);
 
-        FileStream file = File.Open(_path, FileMode.OpenOrCreate, FileAccess.Write);
-        StreamWriter writer = new StreamWriter(file);
-        writer.WriteLine("Total de jogadas: " + GetTotalActivities());
-        if (registerHours)
+        if (File.Exists(path))
+            File.Delete(path);
+
+        if (!Directory.Exists(Path.Combine(desktop, dataFolderName)))
+            Directory.CreateDirectory(Path.Combine(desktop, dataFolderName));
+
+        if (!Directory.Exists(folderPath))
+            Directory.CreateDirectory(folderPath);
+
+        using (var file = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write))
+        using (var writer = new StreamWriter(file))
         {
-            writer.WriteLine("//HORÁRIOS");
-            knownTimes.Add(GetCurrentTime());
-            for (int i = 0; i < knownTimes.Count; i++)
+            writer.WriteLine("Total de jogadas: " + GetTotalActivities());
+            if (registerHours)
             {
-                writer.WriteLine(knownTimes[i]);
+                writer.WriteLine("//HORÁRIOS");
+                knownTimes.Add(GetCurrentTime());
+
+                for (int i = 0; i < knownTimes.Count; i++)
+                    writer.WriteLine(knownTimes[i]);
             }
         }
-        writer.Close();
-        Debug.Log("[ActivityRegister - Write] Saved Sucessfully - " + System.DateTime.Now);
 
+        Debug.Log("[ActivityRegister - Write] Saved Sucessfully - " + System.DateTime.Now);
     }
+
     private static string GetDesktopDir()
     {
         return System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop);
     }
-    private static string GetActivityFolderDir()
+
+    private static string GetActivityFolderPath()
     {
-        return @"\" + dataFolderName + @"\" + dataSubfolderName;
-    }
-    private static string GetActivityFileName()
-    {
-        return @"\" + GetCurrentDate() + ".txt";
+        return Path.Combine(GetDesktopDir(), dataFolderName, dataSubfolderName);
     }
 
+    private static string GetActivityFilePath()
+    {
+        return Path.Combine(GetActivityFolderPath(), GetCurrentDate() + ".txt");
+    }
 }

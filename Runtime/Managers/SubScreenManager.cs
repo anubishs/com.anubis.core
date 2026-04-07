@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class SubScreenManager : MonoBehaviour
@@ -9,17 +7,40 @@ public class SubScreenManager : MonoBehaviour
 
     public void InitializeSubScreens()
     {
-        foreach (var screen in subScreens) screen.SetActive(false);
+        if (subScreens == null)
+            return;
+
+        foreach (var screen in subScreens)
+            if (screen != null)
+                screen.SetActive(false);
     }
 
     public void ChangeSubScreen(int index)
     {
+        if (subScreens == null || subScreens.Length == 0)
+        {
+            Debug.LogWarning("[SubScreenManager] No sub screens configured.");
+            return;
+        }
+
+        if (index < 0 || index >= subScreens.Length)
+        {
+            Debug.LogWarning($"[SubScreenManager] Invalid sub screen index: {index}");
+            return;
+        }
+
+        InitializeSubScreens();
         currentSubScreenIndex = index;
-        subScreens[currentSubScreenIndex].SetActive(true);
+
+        if (subScreens[currentSubScreenIndex] != null)
+            subScreens[currentSubScreenIndex].SetActive(true);
     }
 
     public void PlayScreenAnimation()
     {
-        subScreens[currentSubScreenIndex].GetComponent<Animator>()?.SetTrigger("play");
+        if (subScreens == null || currentSubScreenIndex < 0 || currentSubScreenIndex >= subScreens.Length)
+            return;
+
+        subScreens[currentSubScreenIndex]?.GetComponent<Animator>()?.SetTrigger("play");
     }
 }
