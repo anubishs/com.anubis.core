@@ -1,0 +1,13 @@
+{
+  "name": "com.anubis.core",
+  "version": "1.0.0",
+  "displayName": "Anubis Core",
+  "unity": "6000.2",
+  "description": "Core Systems",
+  "author": {
+    "name": "Anubis Alves"
+  },
+  "dependencies": {
+    "com.unity.ugui" : "2.0.0"
+  }
+}
