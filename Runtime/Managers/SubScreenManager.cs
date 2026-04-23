@@ -10,9 +10,16 @@ public class SubScreenManager : MonoBehaviour
         if (subScreens == null)
             return;
 
-        foreach (var screen in subScreens)
-            if (screen != null)
-                screen.SetActive(false);
+        // foreach (var screen in subScreens)
+        //     if (screen != null)
+        //         screen.SetActive(false);
+        for (int i = 0; i < subScreens.Length; i++)
+        {
+            if (subScreens[i] == null)
+                continue;
+
+            subScreens[i].SetActive(i == 0);
+        }
     }
 
     public void ChangeSubScreen(int index)
